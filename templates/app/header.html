@@ -1,0 +1,18 @@
+<header>
+    <div class="container">
+        <h2 class="mt-2 text-white">{{ title }} | <a class="mt-2 text-white" href="{% url 'logout' %}">Logout</a></h2>
+        <hr class="mt-0 mb-4 nav-bar">
+
+
+        <div class="row">
+            <div class="col-md-6 opacity-graph p-4">
+                {% include 'app/graph.html' %}
+            </div>
+            <div class="col-md-6">
+                <div class="opacity-graph table-wrapper-scroll-y my-custom-scrollbar p-4">
+                    {% include 'app/table.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

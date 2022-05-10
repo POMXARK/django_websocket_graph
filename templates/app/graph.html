@@ -1,0 +1,209 @@
+{% load static %}
+{% block scripts %}
+    <script>
+        let countElOut;
+        let changesFound;
+        let djangoData = [{%for data in qs%}{{data.current}}, {%endfor%}];
+        let djangoLabels = [{%for data in qs%}'{{data.id}}',{%endfor%}];
+        let djangoSts = [{%for data in qs%}'{{data.sts}}',{%endfor%}];
+        let colorArray =
+            [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ];
+        let backgroundColorArray = [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+        ];
+        let graphData = {
+            type: 'line',
+            data: {
+                labels: djangoLabels, //loop through queryset,
+                datasets: [{
+
+                    data: djangoData,
+                    backgroundColor: colorArray,
+                    borderColor: backgroundColorArray,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                legend: {
+                    display: false
+                },
+                animation: {
+                    duration: 0
+                },
+
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'current'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'id'
+                        }
+                    }]
+                }
+            }
+        }
+
+
+        // jquery function
+        $(document).ready(function () {
+
+
+                let ctx = document.getElementById('myChart').getContext('2d');
+                let myChart = new Chart(ctx, graphData);
+
+                let socket = new WebSocket('ws://localhost:8000/ws/graph/');
+
+
+                let djangoData;
+
+                socket.onmessage = function (e) {
+
+
+                    djangoData = JSON.parse(e.data);
+
+
+                    let list_labels = [];
+                    let list_current = [];
+                    let out = [];
+
+                    let current_values;
+
+                    if ("{{ user.get_username }}" === "user1") {
+                        current_values = djangoData.value_1;
+                    }
+
+                    if ("{{ user.get_username }}" === "user2") {
+                        current_values = djangoData.value_2;
+                    }
+
+                    for (const [key, value] of Object.entries(current_values)) {
+                        let news = [];
+                        if (value.id) {
+                            list_labels.push(value.id);
+                            news.push(value.id);
+                        }
+                        if (value.current) {
+                            list_current.push(value.current);
+                            news.push(value.current);
+                        }
+
+                        if (value.sts) {
+                            news.push(value.sts);
+                        }
+                        out.push(news);
+                        {#console.log(out);#}
+                    }
+
+
+                    $('#table_id').on('click', 'button', function () {
+                        changesFound = true;
+                        let parentObj = $(this).closest("tr");
+                        let values = parentObj.find('td');
+                        let id = values[0].textContent;
+                        let current = values[1].textContent;
+                        let sts = values[2].textContent;
+
+
+                        if (sts === '1') {
+                            sts = '2'
+                        } else {
+                            sts = '1'
+                        }
+
+                        let putJson = `{"id": ${id},"current": ${current},"sts": ${sts}}`
+
+                        console.log(putJson);
+
+                        let current_url;
+
+                        if ("{{ username }}" === "user1") {
+                            current_url = `/api/tables-1/${id}/`
+                        }
+                        if ("{{ username }}" === "user2") {
+                            current_url = `/api/tables-2/${id}/`
+                        }
+
+                        $.ajax({
+                            url: current_url,
+                            type: 'PUT',
+                            headers: {"X-CSRFToken": "{{ csrf_token }}"},
+                            data: putJson,
+                            contentType: "application/json",
+                            success: function (result) {
+                                // Do something with the result
+                            },
+                        });
+
+                    });
+
+
+                    if (out.length !== countElOut || changesFound) {
+                        changesFound = false;
+                        countElOut = out.length;
+                        console.log(out);
+                        $('#table_id').DataTable({
+                                destroy: true,
+                                data: out,
+
+                                "columnDefs": [{
+                                    "targets": -1,
+                                    "data": null,
+                                    "defaultContent": '<button type="button" class=" change_sts_new btn btn-primary btn-block">Change sts</button>'
+                                }]
+
+                            }
+                        );
+                    }
+
+
+                    myChart.data.labels = [];
+                    myChart.data.labels.push(...list_labels);
+                    myChart.data.datasets.pop();
+                    myChart.data.datasets.push({
+
+                        borderColor: backgroundColorArray,
+                        backgroundColor: colorArray,
+                        borderWidth: 1,
+                        data: list_current,
+                    });
+
+                    myChart.update();
+
+                }
+
+
+            }
+        );
+
+
+    </script>
+{% endblock scripts %}
+
+<!-- displaying the chart -->
+<!-- you can also play around with the width and height to increase or decrease the chart size -->
+<canvas id="myChart"></canvas>

@@ -1,0 +1,52 @@
+{% load static %}
+{% load index %}
+<!DOCTYPE html>
+<html lang="en">
+{% include 'app/head.html' %}
+<body>
+<base target="_blank">
+{% include 'app/anim_cube.html' %}
+
+
+<header>
+    <div class="container pt-5">
+
+
+
+        <div class="row pt-5 ">
+            <div class="col-4  offset-4 pt-5 opacity-graph">
+                {% block content %}
+
+
+
+
+                    <div class="form-outline mb-4">
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="form-error">{{ form.non_field_errors }}</div>
+
+                            {% for f in form %}
+                                <p>{{ f }}<label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+                                </p>
+                                <div class="form-error">{{ f.errors }}</div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary btn-block mb-4">Sign in</button>
+                        </form>
+                    </div>
+
+
+                {% endblock %}
+
+            </div>
+        </div>
+
+
+    </div>
+</header>
+
+
+</body>
+
+</html>

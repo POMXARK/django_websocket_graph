@@ -1,0 +1,19 @@
+{% load static %}
+{% load index %}
+<!DOCTYPE html>
+<html lang="en">
+{% include 'app/head.html' %}
+<body>
+
+
+<base target="_blank">
+{% if user.is_authenticated %}
+{% include 'app/anim_cube.html' %}
+{% include 'app/header.html' %}
+{% else %}
+    <li><a href="{% url 'login'%}?next={{request.path}}">Login</a>
+{% endif %}
+
+</body>
+
+</html>
